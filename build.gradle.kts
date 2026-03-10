@@ -8,7 +8,7 @@ plugins {
     id("com.google.devtools.ksp") version "2.3.6" apply false
     id("com.chaquo.python") version "17.0.0" apply false
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10" apply false
-    id("io.sentry.android.gradle") version "5.3.0" apply false
+    id("io.sentry.android.gradle") version "6.1.0" apply false
     id("app.cash.paparazzi") version "1.3.5" apply false
     id("jacoco")
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
