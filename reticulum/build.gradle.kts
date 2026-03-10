@@ -76,7 +76,7 @@ dependencies {
     implementation(libs.serialization.json)
 
     // Crash Reporting - Sentry (for KotlinBLEBridge metrics)
-    implementation("io.sentry:sentry-android:8.29.0")
+    implementation("io.sentry:sentry-android:8.34.1")
 
     // Testing
     testImplementation(libs.junit)
