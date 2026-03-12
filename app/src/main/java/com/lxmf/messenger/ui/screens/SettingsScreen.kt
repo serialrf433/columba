@@ -79,6 +79,7 @@ import com.lxmf.messenger.util.CrashReport
 import com.lxmf.messenger.util.CrashReportManager
 import com.lxmf.messenger.util.DeviceInfoUtil
 import com.lxmf.messenger.util.LocationPermissionManager
+import com.lxmf.messenger.viewmodel.BlockedUsersViewModel
 import com.lxmf.messenger.viewmodel.DebugViewModel
 import com.lxmf.messenger.viewmodel.SettingsCardId
 import com.lxmf.messenger.viewmodel.SettingsViewModel
@@ -101,8 +102,11 @@ fun SettingsScreen(
     onNavigateToAnnounces: (filterType: String?) -> Unit = {},
     onNavigateToFlasher: () -> Unit = {},
     onNavigateToApkSharing: () -> Unit = {},
+    onNavigateToBlockedUsers: () -> Unit = {},
 ) {
+    val blockedUsersViewModel: BlockedUsersViewModel = hiltViewModel()
     val state by viewModel.state.collectAsState()
+    val blockedPeerCount by blockedUsersViewModel.blockedPeerCount.collectAsState()
     val qrCodeData by debugViewModel.qrCodeData.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -164,12 +168,13 @@ fun SettingsScreen(
 
     // Refresh background permission state on lifecycle resume (e.g. returning from system settings)
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                hasForegroundPermission = LocationPermissionManager.hasPermission(context)
-                hasBackgroundPermission = LocationPermissionManager.hasBackgroundLocationPermission(context)
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    hasForegroundPermission = LocationPermissionManager.hasPermission(context)
+                    hasBackgroundPermission = LocationPermissionManager.hasBackgroundLocationPermission(context)
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
@@ -276,6 +281,8 @@ fun SettingsScreen(
                     onExpandedChange = { viewModel.toggleCardExpanded(SettingsCardId.PRIVACY, it) },
                     blockUnknownSenders = state.blockUnknownSenders,
                     onBlockUnknownSendersChange = { viewModel.setBlockUnknownSenders(it) },
+                    blockedPeerCount = blockedPeerCount,
+                    onNavigateToBlockedUsers = onNavigateToBlockedUsers,
                 )
 
                 NotificationSettingsCard(
@@ -380,15 +387,17 @@ fun SettingsScreen(
                     onBackgroundPermissionClick = {
                         if (hasBackgroundPermission) {
                             // Already granted — open app info, guide user to Permissions > Location
-                            Toast.makeText(
-                                context,
-                                "Go to Permissions > Location to change",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                            val intent = Intent(
-                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.fromParts("package", context.packageName, null),
-                            )
+                            Toast
+                                .makeText(
+                                    context,
+                                    "Go to Permissions > Location to change",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            val intent =
+                                Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.fromParts("package", context.packageName, null),
+                                )
                             context.startActivity(intent)
                         } else if (LocationPermissionManager.hasPermission(context)) {
                             // Foreground granted but not background — show our custom sheet
@@ -445,6 +454,9 @@ fun SettingsScreen(
                     // Incoming message size limit
                     incomingMessageSizeLimitKb = state.incomingMessageSizeLimitKb,
                     onIncomingMessageSizeLimitChange = { viewModel.setIncomingMessageSizeLimit(it) },
+                    // Message sorting
+                    sortMessagesBySentTime = state.sortMessagesBySentTime,
+                    onSortMessagesBySentTimeToggle = { viewModel.setSortMessagesBySentTime(it) },
                 )
 
                 ImageCompressionCard(

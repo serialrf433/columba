@@ -86,6 +86,7 @@ data class SettingsState(
     val selectedTheme: AppTheme = PresetTheme.VIBRANT,
     val customThemes: List<AppTheme> = emptyList(),
     val isRestarting: Boolean = false,
+    val networkStatus: NetworkStatus = NetworkStatus.CONNECTING,
     // Shared instance state
     val isSharedInstance: Boolean = false,
     val preferOwnInstance: Boolean = false,
@@ -162,6 +163,8 @@ data class SettingsState(
     // Update checker state
     val updateCheckResult: com.lxmf.messenger.service.AppUpdateResult = com.lxmf.messenger.service.AppUpdateResult.Idle,
     val includePrereleaseUpdates: Boolean = false,
+    // Message sort order: false = received time (default), true = sent time
+    val sortMessagesBySentTime: Boolean = false,
 )
 
 @Suppress("TooManyFunctions", "LargeClass") // ViewModel with many user interaction methods is expected
@@ -379,6 +382,7 @@ class SettingsViewModel
                             selectedTheme = selectedTheme,
                             customThemes = customThemes,
                             isRestarting = _state.value.isRestarting,
+                            networkStatus = _state.value.networkStatus,
                             // Shared instance state from repository (set by service)
                             isSharedInstance = isSharedInstance,
                             preferOwnInstance = preferOwnInstance,
@@ -1096,6 +1100,7 @@ class SettingsViewModel
 
                     // Monitor the service's network status for logging
                     reticulumProtocol.networkStatus.collect { status ->
+                        _state.update { it.copy(networkStatus = status) }
                         val currentState = _state.value
 
                         // Only log when we're using a shared instance
@@ -1565,6 +1570,11 @@ class SettingsViewModel
                     _state.update { it.copy(incomingMessageSizeLimitKb = limitKb) }
                 }
             }
+            viewModelScope.launch {
+                settingsRepository.sortMessagesBySentTime.collect { sortBySent ->
+                    _state.update { it.copy(sortMessagesBySentTime = sortBySent) }
+                }
+            }
         }
 
         /**
@@ -1662,6 +1672,13 @@ class SettingsViewModel
                 if (reticulumProtocol is com.lxmf.messenger.reticulum.protocol.ServiceReticulumProtocol) {
                     reticulumProtocol.setIncomingMessageSizeLimit(limitKb)
                 }
+            }
+        }
+
+        fun setSortMessagesBySentTime(enabled: Boolean) {
+            viewModelScope.launch {
+                settingsRepository.setSortMessagesBySentTime(enabled)
+                Log.d(TAG, "Sort messages by sent time: $enabled")
             }
         }
 

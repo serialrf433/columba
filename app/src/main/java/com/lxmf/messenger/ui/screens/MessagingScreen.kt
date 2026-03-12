@@ -65,6 +65,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Circle
@@ -89,6 +90,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -134,6 +136,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -155,7 +158,6 @@ import androidx.paging.compose.itemKey
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.lxmf.messenger.R
-import androidx.compose.ui.res.stringResource
 import com.lxmf.messenger.service.SyncProgress
 import com.lxmf.messenger.service.SyncResult
 import com.lxmf.messenger.ui.components.AttachmentPanel
@@ -403,6 +405,8 @@ fun MessagingScreen(
     // Message font scale (text size dialog)
     val messageFontScale by viewModel.messageFontScale.collectAsStateWithLifecycle()
     var showTextSizeDialog by remember { mutableStateOf(false) }
+    var showBlockDialog by remember { mutableStateOf(false) }
+    val isTransportEnabled by viewModel.isTransportEnabled.collectAsStateWithLifecycle()
 
     // File attachment state
     val selectedFileAttachments by viewModel.selectedFileAttachments.collectAsStateWithLifecycle()
@@ -1039,6 +1043,26 @@ fun MessagingScreen(
                                     showTextSizeDialog = true
                                 },
                             )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Block,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                },
+                                text = {
+                                    Text(
+                                        "Block User",
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    showBlockDialog = true
+                                },
+                            )
                         }
                     }
                 },
@@ -1611,6 +1635,26 @@ fun MessagingScreen(
             onDismiss = { showTextSizeDialog = false },
         )
     }
+
+    // Block user dialog
+    if (showBlockDialog) {
+        BlockUserDialog(
+            peerName = peerName,
+            isTransportEnabled = isTransportEnabled,
+            onConfirm = { deleteMessages, blackholeEnabled ->
+                viewModel.blockUser(
+                    deleteConversation = deleteMessages,
+                    blackholeEnabled = blackholeEnabled,
+                )
+                showBlockDialog = false
+                onBackClick()
+                android.widget.Toast
+                    .makeText(context, "Blocked $peerName", android.widget.Toast.LENGTH_SHORT)
+                    .show()
+            },
+            onDismiss = { showBlockDialog = false },
+        )
+    }
 }
 
 @Suppress("UnusedParameter") // Params kept for API consistency; actions handled by overlay
@@ -1787,7 +1831,7 @@ fun MessageBubble(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = formatTimestamp(message.timestamp),
+                            text = formatTimestamp(message.receivedAt ?: message.timestamp),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White,
                         )
@@ -2047,7 +2091,7 @@ fun MessageBubble(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = formatTimestamp(message.timestamp),
+                                text = formatTimestamp(message.receivedAt ?: message.timestamp),
                                 style = MaterialTheme.typography.labelSmall,
                                 color =
                                     if (isFromMe) {
