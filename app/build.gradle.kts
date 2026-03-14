@@ -7,7 +7,7 @@ plugins {
     kotlin("plugin.compose")
     kotlin("plugin.serialization")
     id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android")
+    // id("com.google.dagger.hilt.android")
     id("com.chaquo.python")
     id("io.sentry.android.gradle")
 }
