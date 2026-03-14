@@ -409,7 +409,7 @@ dependencies {
 
     // Crash Reporting - GlitchTip (Sentry-compatible)
     // Phase 4 Task 4.2: Production Observability
-    implementation("io.sentry:sentry-android:8.29.0")
+    implementation("io.sentry:sentry-android:8.34.1")
 
     // Performance Monitoring - JankStats for frame monitoring
     // Phase 1 Plan 01-03: Frame tracking integration with Sentry
