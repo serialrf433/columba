@@ -3,7 +3,7 @@ import java.util.Base64
 
 plugins {
     id("com.android.application")
-    kotlin("android")
+    // kotlin("android")
     kotlin("plugin.compose")
     kotlin("plugin.serialization")
     id("com.google.devtools.ksp")
