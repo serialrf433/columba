@@ -16,7 +16,7 @@ cameraX = "1.5.2"
 ktlint = "12.1.1"
 detekt = "1.23.7"
 serialization = "1.10.0"
-coil = "2.6.0"
+coil = "2.7.0"
 
 [libraries]
 # Compose
